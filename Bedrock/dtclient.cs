@@ -15,9 +15,9 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-class Program
+class DTclient
 {
-	public static void dtclient()
+	public static void Main()
 	{
 		MessageBox.Show("test");
 	}

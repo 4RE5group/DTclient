@@ -15,14 +15,10 @@ using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace DTclient
+namespace DTinjector
 {
     static class Program
     {
-		
-		
-		
-		
 		
 		[DllImport("kernel32.dll")]
 		public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
@@ -74,20 +70,37 @@ IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpPar
 	
 	
 			Process targetProcess = Process.GetProcessesByName("Minecraft.Windows")[0];
-
-			IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, targetProcess.Id);
+			
+			IntPtr procHandle = OpenProcess(2035711, false, targetProcess.Id);
+			// IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, targetProcess.Id);
 
 			IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
 
-			string dllName = @"C:\Users\celin\AppData\Local\Ambrosial\assets\clients\1.18.3004.0\Horion\1.0\Horion.dll";
+			string dllName = @"dtclient.dll";
 
-			IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+			// IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 
-			UIntPtr bytesWritten;
-			WriteProcessMemory(procHandle, allocMemAddress, Encoding.Default.GetBytes(dllName), (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), out bytesWritten);
+			// UIntPtr bytesWritten;
+			// WriteProcessMemory(procHandle, allocMemAddress, Encoding.Default.GetBytes(dllName), (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), out bytesWritten);
 
-			CreateRemoteThread(procHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero);
+			// CreateRemoteThread(procHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero);
 			
+			IntPtr p1 = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)(dllName.Length + 1), 12288U, 64U);
+			IntPtr p2 = IntPtr.Zero;
+			UIntPtr bytesWritten;
+			WriteProcessMemory(procHandle, p1, Encoding.ASCII.GetBytes(dllName), (uint)(dllName.Length + 1), p2);
+			// IntPtr procAddress = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+			IntPtr p3 = CreateRemoteThread(procHandle, IntPtr.Zero, 0U, loadLibraryAddr, p1, 0U, p2);
+			
+			
+			
+			
+			
+			
+			
+			
+			// MessageBox.Show("Injected");
+			// GetProcAddress(loadLibraryAddr, "DTclient.init");
 			return;
 		}
 		// public static void inject(string path)
