@@ -1,6 +1,6 @@
 @echo off
 
-call C:\Windows\Microsoft.NET\Framework\v3.5\csc.exe /target:library dtclient.cs
+call U:\j.clementmassonna\MinGW\bin\g++ dtclient.cpp -o dtclient
 echo compiled dll 1/2
 pause
 call C:\Windows\Microsoft.NET\Framework\v3.5\csc.exe  injector.cs
