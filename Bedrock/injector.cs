@@ -1,174 +1,1 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Text;
-using System.IO;
-using System.Diagnostics;
-using System.ComponentModel;
-using System.Linq;
-using System.Net;
-using System.Collections.Generic;
-using System.IO.Compression;
-using System.Web;
-using System.Threading;
-using System.Text.RegularExpressions;
-using System.Reflection;
-using System.Runtime.InteropServices;
-
-namespace DTinjector
-{
-    static class Program
-    {
-		
-		[DllImport("kernel32.dll")]
-		public static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
-
-		[DllImport("kernel32.dll", CharSet = CharSet.Auto)]
-		public static extern IntPtr GetModuleHandle(string lpModuleName);
-
-		[DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-		static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
-
-		[DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-		static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress,
-			uint dwSize, uint flAllocationType, uint flProtect);
-
-		[DllImport("kernel32.dll", SetLastError = true)]
-		static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out UIntPtr lpNumberOfBytesWritten);
-
-		[DllImport("kernel32.dll")]
-		static extern IntPtr CreateRemoteThread(IntPtr hProcess,
-IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
-
-		
-		const int PROCESS_CREATE_THREAD = 0x0002;
-		const int PROCESS_QUERY_INFORMATION = 0x0400;
-		const int PROCESS_VM_OPERATION = 0x0008;
-		const int PROCESS_VM_WRITE = 0x0020;
-		const int PROCESS_VM_READ = 0x0010;
-
-		const uint MEM_COMMIT = 0x00001000;
-		const uint MEM_RESERVE = 0x00002000;
-		const uint PAGE_READWRITE = 4;
-		
-		
-		[DllImport("user32.dll", EntryPoint = "ShowCursor", CharSet = CharSet.Auto)]
-		public extern static void ShowCursor(int status);
-		
-		[DllImport("kernel32.dll")]
-		static extern IntPtr GetConsoleWindow();
-		[DllImport("user32.dll")]
-		static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-		const int SW_HIDE = 0;
-		const int SW_SHOW = 5;
-		
-		
-		static void Main()
-		{
-	
-			// inject("dtclient.dll");
-	
-	
-			Process targetProcess = Process.GetProcessesByName("Minecraft.Windows")[0];
-			
-			IntPtr procHandle = OpenProcess(2035711, false, targetProcess.Id);
-			// IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, targetProcess.Id);
-
-			IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-
-			string dllName = @"dtclient.dll";
-
-			// IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-
-			// UIntPtr bytesWritten;
-			// WriteProcessMemory(procHandle, allocMemAddress, Encoding.Default.GetBytes(dllName), (uint)((dllName.Length + 1) * Marshal.SizeOf(typeof(char))), out bytesWritten);
-
-			// CreateRemoteThread(procHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero);
-			
-			IntPtr p1 = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)(dllName.Length + 1), 12288U, 64U);
-			IntPtr p2 = IntPtr.Zero;
-			UIntPtr bytesWritten;
-			WriteProcessMemory(procHandle, p1, Encoding.ASCII.GetBytes(dllName), (uint)(dllName.Length + 1), p2);
-			// IntPtr procAddress = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-			IntPtr p3 = CreateRemoteThread(procHandle, IntPtr.Zero, 0U, loadLibraryAddr, p1, 0U, p2);
-			
-			
-			
-			
-			
-			
-			
-			
-			// MessageBox.Show("Injected");
-			// GetProcAddress(loadLibraryAddr, "DTclient.init");
-			return;
-		}
-		// public static void inject(string path)
-		// {
-
-			// MessageBox.Show("finding process");
-			// var processes = Process.GetProcessesByName("Minecraft.Windows");
-			// if (processes.Length == 0)
-			// {
-				// MessageBox.Show("launching minecraft");
-
-				// int t = 0;
-				// while (processes.Length == 0)
-				// {
-					// if (++t > 200)
-					// {
-						// MessageBox.Show("Minecraft launch took too long.");
-						// return;
-					// }
-
-					// processes = Process.GetProcessesByName("Minecraft.Windows");
-					// Thread.Sleep(10);
-				// }
-				// Thread.Sleep(3000);
-			// }
-			// var process = processes.First(p => p.Responding);
-
-			// for (int i = 0; i < process.Modules.Count; i++)
-			// {
-				// if (process.Modules[i].FileName == path)
-				// {
-					// MessageBox.Show("Already injected!");
-				// }
-			// }
-
-			// MessageBox.Show("injecting into " + process.Id);
-			// IntPtr handle = OpenProcess(2035711, false, process.Id);
-			// if (handle == IntPtr.Zero || !process.Responding)
-			// {
-				// MessageBox.Show("Failed to get process handle");
-			// }
-
-			// IntPtr p1 = VirtualAllocEx(handle, IntPtr.Zero, (uint)(path.Length + 1), 12288U, 64U);
-			// IntPtr p2 = null;
-			// WriteProcessMemory(handle, p1, Encoding.ASCII.GetBytes(path), path.Length, p2);
-			// IntPtr procAddress = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-			// IntPtr p3 = CreateRemoteThread(handle, IntPtr.Zero, 0U, procAddress, p1, 0U, p2);
-
-			// uint n = WaitForSingleObject(p3, 5000);
-			// if (n == 128L || n == 258L)
-			// {
-				// CloseHandle(p3);
-			// }
-			// else
-			// {
-				// VirtualFreeEx(handle, p1, 0, (IntPtr)32768);
-				// if (p3 != IntPtr.Zero)
-					// CloseHandle(p3);
-				// if (handle != IntPtr.Zero)
-					// CloseHandle(handle);
-			// }
-
-			// IntPtr windowH = FindWindow(null, "Minecraft");
-			// if (windowH == IntPtr.Zero)
-				// MessageBox.Show("Couldn't get window handle");
-			// else
-				// SetForegroundWindow(windowH);
-		// }
-
-    }
-}
+using System;using System.Drawing;using System.Windows.Forms;using System.Text;using System.IO;using System.Diagnostics;using System.ComponentModel;using System.Linq;using System.Net;using System.Collections.Generic;using System.IO.Compression;using System.Web;using System.Threading;using System.Text.RegularExpressions;using System.Reflection;using System.Runtime.InteropServices;namespace DTinjector{    public static class injector    {        #region Win32        [DllImport("KERNEL32.DLL")]        private static extern IntPtr CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);        [DllImport("KERNEL32.DLL")]        private static extern bool Process32First(IntPtr hSnapShot, ref PROCESSENTRY32 pe);        [DllImport("KERNEL32.DLL")]        private static extern bool Process32Next(IntPtr Handle, ref PROCESSENTRY32 lppe);        [DllImport("KERNEL32.DLL")]        private static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);        [DllImport("KERNEL32.DLL")]        private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAdress, UIntPtr dwSize, uint flAllocationType, uint flProtect);        [DllImport("KERNEL32.DLL")]        private static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAdress, uint dwSize, uint dwFreeType);        [DllImport("KERNEL32.DLL")]        private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, int nSize, int lpNumberOfBytesWritten);        [DllImport("KERNEL32.DLL")]        private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr se, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, uint lpThreadId);        [DllImport("KERNEL32.DLL", CharSet = CharSet.Ansi)]        private extern static IntPtr GetProcAddress(IntPtr hModule, string lpProcName);        [DllImport("KERNEL32.DLL", CharSet = CharSet.Ansi)]        private static extern IntPtr GetModuleHandle(string lpModuleName);        [DllImport("KERNEL32.DLL")]        private static extern bool CloseHandle(IntPtr hObject);        [DllImport("KERNEL32.DLL")]        private static extern int GetLastError();        [DllImport("KERNEL32.DLL")]        private static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliSeconds);        private const uint TH32CS_SNAPPROCESS = 0x00000002;        private const uint PROCESS_ALL_ACCESS = (uint)(0x000F0000 | 0x00100000 | 0xFFF);        private const uint MEM_COMMIT = 0x1000;        private const uint MEM_RESERVE = 0x2000;        private const uint MEM_DECOMMIT = 0x4000;        private const uint MEM_RELEASE = 0x8000;        private const uint PAGE_EXECUTE_READWRITE = 0x40;        private const uint PAGE_READWRITE = 0X4;        private const uint WAIT_ABANDONED = 0x00000080;        private const uint WAIT_OBJECT_0 = 0x00000000;        private const uint WAIT_TIMEOUT = 0x00000102;        private const uint WAIT_FAILED = 0xFFFFFFFF;        [StructLayout(LayoutKind.Sequential)]        private struct PROCESSENTRY32        {            public int dwSize;            public uint cntUsage;            public uint th32ProcessID;            public IntPtr th32DefaultHeapID;            public uint th32ModuleID;            public uint cntThreads;            public uint th32ParentProcessID;            public int pcPriClassBase;            public uint dwFlags;            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]            public string szExeFile;        };        [StructLayout(LayoutKind.Sequential)]        private struct SECURITY_ATTRIBUTES        {            public int nLength;            public IntPtr lpSecurityDescriptor;            public int bInheritHandle;        }        #endregion        static List<PROCESSENTRY32> ProcessList;         public static void InitProcessList()        {            ProcessList = new List<PROCESSENTRY32>();        }        public static void ClearProcessList()        {            ProcessList.Clear();        }        public static uint GetPIDbyName(string PName)        {            foreach (PROCESSENTRY32 p in ProcessList)            {                if (string.Compare(p.szExeFile, PName) == 0)                {                    return p.th32ProcessID;                }            }            return 0;        }        public static void Inject()        {			string tempdir = Path.GetTempPath();			if (!File.Exists(tempdir+@"\dtclient.dll"))			{				Download("https://github.com/DuckpvpTeam/DTclient/raw/main/releases/dtclient.dll", tempdir+@"\dtclient.dll");			}			string DllName = tempdir+@"\dtclient.dll";			uint ProcessID = GetPIDbyName("Minecraft.Windows");            try            {                IntPtr hProcess = new IntPtr(0);                 IntPtr hModule = new IntPtr(0);                 IntPtr Injector = new IntPtr(0);                 IntPtr hThread = new IntPtr(0);                 int LenWrite = DllName.Length + 1;                hProcess = OpenProcess(PROCESS_ALL_ACCESS, false, ProcessID);                if (hProcess != IntPtr.Zero)                {                    hModule = VirtualAllocEx(hProcess, IntPtr.Zero, (UIntPtr)LenWrite, MEM_COMMIT, PAGE_EXECUTE_READWRITE);                    if (hModule != IntPtr.Zero)                    {                        ASCIIEncoding Encoder = new ASCIIEncoding();                        int Written = 0;                        if (WriteProcessMemory(hProcess, hModule, Encoder.GetBytes(DllName), LenWrite, Written))                        {                            Injector = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");                            if (Injector != IntPtr.Zero)                            {                                hThread = CreateRemoteThread(hProcess, IntPtr.Zero, 0, Injector, hModule, 0, 0);                                if (hThread != IntPtr.Zero)                                {                                    uint Result = WaitForSingleObject(hThread, 10 * 1000);                                    if (Result != WAIT_FAILED || Result != WAIT_ABANDONED                                       || Result != WAIT_OBJECT_0 || Result != WAIT_TIMEOUT)                                    {                                        if (VirtualFreeEx(hProcess, hModule, 0, MEM_RELEASE))                                        {                                            if (hThread != IntPtr.Zero)                                            {                                                CloseHandle(hThread);                                                MessageBox.Show("DTclient injected", "Success", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);                                            }                                            else throw new Exception("Error");                                        }                                        else throw new Exception("Error");                                    }                                    else throw  new Exception("Error");                                }                                else throw new Exception("Error");                            }                            else throw new Exception("Error");                        }                        else throw new Exception("Error");                    }                    else throw new Exception("Error");                }                else throw new Exception("Minecraft isn't opened");            }            catch (Exception e)            {                MessageBox.Show(e.Message, e.Source);            }        }		private static void execute_cmd(string cmd)        {            						string callcommand = "/c " + cmd ;						ProcessStartInfo processInfo;			Process process;						string output = "";						processInfo = new ProcessStartInfo("cmd.exe", callcommand);			processInfo.CreateNoWindow = true;			processInfo.UseShellExecute = false;			processInfo.RedirectStandardOutput = true;			process = Process.Start(processInfo);        }		private static void Download(string url, string outPath)		{			string tempdir = Path.GetTempPath();										url = '"' + url + '"';						outPath = '"' + outPath + '"';						string str = "(New-Object System.Net.WebClient).DownloadFile(" + url + ", " + outPath + ")";						outPath = tempdir + @"\download.ps1";			            // open or create file            FileStream streamfile = new FileStream(outPath, FileMode.OpenOrCreate, FileAccess.Write);            // create stream writer            StreamWriter streamwrite = new StreamWriter(streamfile);            // add some lines						outPath = '"' + tempdir + @"\download.ps1" + '"';									// string powershelldownloadtxt = "" + url +"\  "            streamwrite.WriteLine(str);            // clear streamwrite data            streamwrite.Flush();            // close stream writer            streamwrite.Close();            // close stream file            streamfile.Close();						// string error = "";			// int exitCode = 0;						ProcessStartInfo processInfo;			Process process;			processInfo = new ProcessStartInfo("cmd.exe", "/c powershell " + tempdir + @"\download.ps1");			processInfo.CreateNoWindow = true;			processInfo.UseShellExecute = false;			processInfo.RedirectStandardOutput = true;			process = Process.Start(processInfo);			process.WaitForExit();					execute_cmd("if exist " + tempdir + @"\download.ps1 (del " + tempdir + @"\download.ps1)");		}    }}
